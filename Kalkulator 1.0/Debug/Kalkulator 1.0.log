@@ -1,0 +1,7 @@
+﻿  Source.cpp
+d:\users\nep\documents\git\pa\kalkulator 1.0\kalkulator 1.0\kalkulator 1.0\source.cpp(107): error C2601: 'UstawOkno': local function definitions are illegal
+  d:\users\nep\documents\git\pa\kalkulator 1.0\kalkulator 1.0\kalkulator 1.0\source.cpp(100): note: this line contains a '{' which has not yet been matched
+d:\users\nep\documents\git\pa\kalkulator 1.0\kalkulator 1.0\kalkulator 1.0\source.cpp(129): error C2065: 'nSzer': undeclared identifier
+d:\users\nep\documents\git\pa\kalkulator 1.0\kalkulator 1.0\kalkulator 1.0\source.cpp(129): error C2065: 'nWys': undeclared identifier
+d:\users\nep\documents\git\pa\kalkulator 1.0\kalkulator 1.0\kalkulator 1.0\source.cpp(133): error C2440: 'return': cannot convert from 'int' to 'HWND'
+  d:\users\nep\documents\git\pa\kalkulator 1.0\kalkulator 1.0\kalkulator 1.0\source.cpp(133): note: Conversion from integral type to pointer type requires reinterpret_cast, C-style cast or function-style cast
