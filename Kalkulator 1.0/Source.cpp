@@ -2,7 +2,8 @@
 //Programista:	Hubert Hodowaniec
 
 #include <windows.h>
-#include <math.h>
+#include <cmath>
+#include <string>
 
 #define BUTTON0 100
 #define BUTTON1 101
@@ -30,7 +31,7 @@
 #define BUTTONP 119 //pierwiastek
 #define BUTTONS 120 //silnia
 #define BUTTONLO 121 //liczba odwrotna
-#define BUTTONPR 122 //procent
+//#define BUTTONPR 122 //procent
 
 #define BUTTONSIN 123 
 #define BUTTONCOS 124
@@ -42,14 +43,14 @@
 
 #define MAXOUT 25
 #define MAXIN  10
+#define PI 3.14159265
 
 
 //prototypy funkcji
-void ustawWartosc(char* val);
-void oblicz(void);
-double liczbaOdwrotna(double val);
+void ustawWartosc(HWND hEB, double display);
+double oblicz(int functionflag, double display1, double display2);
 LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp);
-HWND UstawOkno(char* cClass, char* cTitle, int nWidth, int nHeight, HINSTANCE hInstance);
+HWND ustawOkno(char* cClass, char* cTitle, int nSzer, int nWys, HINSTANCE hInstance);
 
 //zmienne globalne
 HWND hOkno,
@@ -61,13 +62,50 @@ hBP, hBS, hBLO, hBPR,
 hBSIN, hBCOS, hBTG, hBLN, hBLG,
 hEB;
 
-int flag_Fun = 0;		//flaga funkcji: 0=brak, 1=dodawanie, 2=odejmowanie, itd.
+double display1 = 0, display2 = 0;
+double wynik = 0;
+int functionflag = 0;	//flaga funkcji: 0=brak, 1=dodawanie, 2=odejmowanie, itd.
 int flag_New = 1;		//flaga nowy/kolejny
-double dTotal = 0;		//wartoœæ bufora
-char cBuf[MAXOUT];		//bufor
+//double dTotal = 0;		//wartoœæ bufora
+//char cBuf[MAXOUT];		//bufor
+
+HWND ustawOkno(char* cClass, char* cTitle, int nSzer, int nWys, HINSTANCE hInstance)
+{
+	//rejestracja klasy okienkowej
+	WNDCLASSEX wc;
+	HWND hOkno;
+
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.cbClsExtra = 0;
+	wc.style = CS_HREDRAW | CS_VREDRAW;
+	wc.lpfnWndProc = wnd_proc;
+	wc.cbWndExtra = 0;
+	wc.hInstance = hInstance;
+	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
+	wc.lpszMenuName = NULL;
+	wc.lpszClassName = cClass;
+	RegisterClassEx(&wc);
+
+	//tworzenie okna...
+	hOkno = CreateWindowEx(0, cClass, cTitle,
+		WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
+		CW_USEDEFAULT, CW_USEDEFAULT, nSzer, nWys,
+		NULL, NULL, hInstance, NULL);
+
+	/*
+	if (NULL == hOkno)
+		return -1; //sprawdzenie, czy siê uda³o
+	*/
+
+	return hOkno;
+}
 
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdline, int iCmdShow)
 {
 	char* cClass = "Kalkulator";	// nazwa klasy
 	char* cTitle = "Kalkulator";	// nazwa okienka
@@ -76,7 +114,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 	MSG msg;
 
-	hOkno = UstawOkno(cClass, cTitle, nSzer, nWys, hInstance);
+	hOkno = ustawOkno(cClass, cTitle, nSzer, nWys, hInstance);
 
 	hB1 = CreateWindow("button", "1", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 20, 156, 40, 30, hOkno, (HMENU)BUTTON1, hInstance, NULL);
 	hB2 = CreateWindow("button", "2", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 65, 156, 40, 30, hOkno, (HMENU)BUTTON2, hInstance, NULL);
@@ -113,43 +151,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 
 	hEB = CreateWindowEx(WS_EX_CLIENTEDGE, "edit", "", WS_CHILD | WS_VISIBLE | ES_RIGHT, 20, 20, 225, 25, hOkno, (HMENU)EDITBX, hInstance, NULL);
 
-	SetWindowText(hEB, "0."); //ustawia wartoœæ pocz¹tkow¹ w oknie
+	ustawWartosc(hEB, 0); //ustawia wartoœæ pocz¹tkow¹ w oknie
 
-
-	HWND UstawOkno(char* cClass, char* cTitle, int nWidth, int nHeight, HINSTANCE hInstance)
-	{
-		//rejestracja klasy okienkowej
-		WNDCLASSEX wc;
-		HWND hOkno;
-
-		wc.cbSize = sizeof(WNDCLASSEX);
-		wc.cbClsExtra = 0;
-		wc.style = CS_HREDRAW | CS_VREDRAW;
-		wc.lpfnWndProc = wnd_proc;
-		wc.cbWndExtra = 0;
-		wc.hInstance = hInstance;
-		wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-		wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-		wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-		wc.lpszMenuName = NULL;
-		wc.lpszClassName = "cClass";
-		RegisterClassEx(&wc);
-
-		//tworzenie okna...
-		hOkno = CreateWindowEx(0, cClass, cTitle,
-			WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
-			CW_USEDEFAULT, CW_USEDEFAULT, nSzer, nWys,
-			NULL, NULL, hInstance, NULL);
-
-		if (NULL == hOkno) 
-			return -1; //sprawdzenie, czy siê uda³o
-
-		return hOkno;
-	}
+	ShowWindow(hOkno, iCmdShow);
+	UpdateWindow(hOkno);
 
 	//pêtla obs³ugi komunikatów
-	while (GetMessage(&msg, 0, 0, 0))
+	while(GetMessage(&msg, 0, 0, 0))
 	{
 		TranslateMessage(&msg);
 		DispatchMessage(&msg);
@@ -161,8 +169,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int)
 //funkcja obs³ugi komunikatów okna
 LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
-	static bool dot;
-	static bool backsp;
+	static bool isFunctionActive;
+	static bool kropka;
 
 	switch (message)
 	{
@@ -182,123 +190,210 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 			}*/
 			switch (LOWORD(wp))
 			{
+				case BUTTONR:				// '=' 
+				{
+					wynik = oblicz(functionflag, display1, display2);
+					ustawWartosc(hEB, wynik);
+					isFunctionActive = false;
+					break;
+				}
 				case BUTTON0:			// BUTTON0 clicked
 				{
-					if (nNew)
-					{
-						cBuf[0] = 0;
-						SetWindowText(hEB, "0.");
-						nNew = 0;
-					}
+					if (isFunctionActive)
+						display1 = 0;
 
-					if ((strlen(cBuf) > 0) && (strlen(cBuf) < MAXIN))
-					{
-						strcat(&cBuf[0], "0");
-						SetWindowText(hEB, cBuf);
-					}
-
-					backsp = true;
-
+					if (display1 != 0)
+						display1 = display1 * 10;
+					//backsp = true;
 					break;
 				}
 				case BUTTON1:			// BUTTON1 clicked
 				{
-					ustawWartosc("1");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;
 
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 1;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (1 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTON2:			// BUTTON2 clicked
 				{
-					ustawWartosc("2");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;
 
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 2;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (2 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTON3:			// BUTTON3 clicked
 				{
-					ustawWartosc("3");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;
 
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 3;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (3 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTON4:			// BUTTON4 clicked
 				{
-					ustawWartosc("4");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;
 
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 4;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (4 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTON5:			// BUTTON5 clicked
 				{
-					ustawWartosc("5");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;
 
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 5;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (5 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTON6:			// BUTTON6 clicked
 				{
-					ustawWartosc("6");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;			
 
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 6;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (6 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTON7:			// BUTTON7 clicked
 				{
-					ustawWartosc("7");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;
+
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 7;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (7 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTON8:			// BUTTON8 clicked
 				{
-					ustawWartosc("8");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;
+
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 8;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (8 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTON9:			// BUTTON9 clicked
 				{
-					ustawWartosc("9");
-					backsp = true;
+					if (isFunctionActive)
+						display1 = 0;
+
+					if (!kropka)
+					{
+						display1 = (display1 * 10) + 9;
+						ustawWartosc(hEB, display1);
+					}
+					else
+					{
+						display1 = display1 + (9 / 10);
+						ustawWartosc(hEB, display1);
+					}
 					break;
 				}
 				case BUTTONPI:
 				{
-					ustawWartosc("3.14");
-					backsp = true;
-					break;
-				}
-				case BUTTONK:			// Dot clicked
-				{
-					if (nNew)
+					if (isFunctionActive)
+						display1 = 0;
+
+					if (!kropka)
 					{
-						cBuf[0] = 0;
-						SetWindowText(hEB, cBuf);
-						nNew = 0;
+						display1 = (display1 * 10) + PI;
+						ustawWartosc(hEB, display1);
 					}
-
-					if ((!dot) && (strlen(cBuf) < MAXIN))
+					else
 					{
-						strcat(&cBuf[0], ".");
-						SetWindowText(hEB, cBuf);
-						dot = true;
+						display1 = display1 + (PI / 10);
+						ustawWartosc(hEB, display1);
 					}
-
-					backsp = true;
-
 					break;
 				}
-				case BUTTONC:					// BUTTON C clicked
+				case BUTTONK:			// kropka dziesiêtna
 				{
-					dTotal = 0;					// Clear total
-					cBuf[0] = 0;				// Clear char buffer
-					SetWindowText(hEB, "0.");
-					nNew = 1;					// Set new digit
-					nFunc = 0;					// set function to none
-					dot = false;
-					backsp = false;
+					if (!kropka)
+						kropka = true;
+					else if (kropka)
+						kropka = false;
 					break;
 				}
-				case BUTTONB:					// Backspace clicked
+				case BUTTONC:					// czyszczenie
+				{
+					display1 = 0;
+					display2 = 0;
+					ustawWartosc(hEB, display1);
+					isFunctionActive = false;
+					break;
+				}
+				/*case BUTTONB:					// TODO  Backspace clicked
 				{
 					if (backsp)
 					{
@@ -328,115 +423,93 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 						}
 					}
 					break;
-				}
-				case BUTTOND:				// '+' clicked
+				}*/
+				case BUTTOND:				// '+' 
 				{
-					oblicz();
-					nFunc = 1;				// Set function to add
-					dot = false;
-					backsp = false;
-
+					functionflag = 1;			
+					isFunctionActive = true;
+					display2 = display2 + display1;
 					break;
 				}
-				case BUTTONO:				// '-' clicked
+				case BUTTONO:				// '-' 
 				{
-					oblicz();
-					nFunc = 2;				// Set function to subtract
-					dot = false;
-					backsp = false;
+					functionflag = 2;			
+					isFunctionActive = true;
+					display2 = display2 + display1;
 					break;
 				}
-				case BUTTONX:				// 'x' clicked
+				case BUTTONX:				// '*' 
 				{
-					oblicz();
-					nFunc = 3;				// Set function to multiply
-					dot = false;
-					backsp = false;
+					functionflag = 3;				
+					isFunctionActive = true;
+					display2 = display2 + display1;
 					break;
 				}
-				case BUTTONDZ:				// '/' clicked
+				case BUTTONDZ:				// '/' 
 				{
-					oblicz();
-					nFunc = 4;				// Set function to divide
-					dot = false;
-					backsp = false;
+					functionflag = 4;				
+					isFunctionActive = true;
+					display2 = display2 + display1;
 					break;
 				}
-				case BUTTONR:				// '=' clicked
+				case BUTTONP:				// 'sqrt' 
 				{
-					oblicz();
-					nFunc = 0;
-					dot = false;
-					backsp = false;
+					functionflag = 5;
+					isFunctionActive = true;
+					//display2 = display2 + display1;
 					break;
 				}
-				case BUTTONP:				// 'sqrt' clicked
+				case BUTTONS:				// silnia
 				{
-					double dRoot;
-
-					GetWindowText(hEB, cBuf, MAXOUT);
-					dRoot = sqrt(atof(cBuf));
-
-					cBuf[0] = 0;			// Empty char buffer
-					_gcvt(dRoot, MAXOUT, cBuf);
-					SetWindowText(hEB, cBuf);
-					nNew = 1;				// Set new digit
-					dot = false;
-					backsp = false;
-
+					functionflag = 6;
+					isFunctionActive = true;
+					//display2 = display2 + display1;
 					break;
 				}
-				case BUTTONLO:				// '1/x' clicked
+				case BUTTONLO:				// '1/x' 
 				{
-					double dRecip;
-
-					GetWindowText(hEB, cBuf, MAXOUT);
-					dRecip = 1 / atof(cBuf);
-
-					cBuf[0] = 0;			// Empty char buffer
-					_gcvt(dRecip, MAXOUT, cBuf);
-					SetWindowText(hEB, cBuf);
-					nNew = 1;				// Set new digit
-					dot = false;
-					backsp = false;
+					functionflag = 7;
+					isFunctionActive = true;
+					//display2 = display2 + display1;
 					break;
 				}
-				case BUTTONS:				// 'x!' clicked
+				case BUTTONSIN:				// sinus 
 				{
-					double dFact;
-					double dFraction, dInt;
-
-					GetWindowText(hEB, cBuf, MAXOUT);
-
-					if (atof(cBuf)<0)
-					{
-						strcpy(cBuf, "-E-");
-						dTotal = 0;
-					}
-					else
-					{
-						dFraction = modf(atof(cBuf), &dInt);
-
-						if ((dFraction == 0) && (dInt >= 0))
-						{
-							dFact = Factorial(atof(cBuf));
-							cBuf[0] = 0;			// Empty char buffer
-							_gcvt(dFact, MAXOUT, cBuf);
-						}
-						else
-						{
-							strcpy(cBuf, "-E-");
-							dTotal = 0;
-						}
-					}
-
-					SetWindowText(hEB, cBuf);
-					nNew = 1;					// Set new digit
-					dot = false;
-					backsp = false;
+					functionflag = 8;
+					isFunctionActive = true;
+					//display2 = display2 + display1;
+					break;
+				}					
+				case BUTTONCOS:				// cosinus
+				{
+					functionflag = 9;
+					isFunctionActive = true;
+					//display2 = display2 + display1;
 					break;
 				}
+				case BUTTONTG:				// tangens
+				{
+					functionflag = 10;
+					isFunctionActive = true;
+					//display2 = display2 + display1;
+					break;
 				}
+				case BUTTONLN:				// ln
+				{
+					functionflag = 11;
+					isFunctionActive = true;
+					//display2 = display2 + display1;
+					break;
+				}
+				case BUTTONLG:				// log10				
+				{
+					functionflag = 12;
+					isFunctionActive = true;
+					//display2 = display2 + display1;
+					break;
+				}
+				
+			}
 			break;
 		}
 	
@@ -452,4 +525,96 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 		return DefWindowProc(hwnd, message, wp, lp);
 	}
 	return 0;
+}
+
+void ustawWartosc(HWND hEB,double display)
+{
+	std::string s = std::to_string(display);
+	SetWindowText(hEB, s.c_str());
+}
+
+double oblicz(int functionflag, double display1, double display2)
+{
+	switch (functionflag)
+	{
+		double wynik;
+
+		/*case 0:
+		{
+			GetWindowText(hEB, cBuf, MAXOUT);
+			dTotal = atof(cBuf);
+			break;
+		}*/
+		case 1: //dodawanie
+		{
+			return wynik = display1 + display2;
+			break;
+		}
+		case 2: //odejmowanie
+		{
+			return wynik = display2 - display1;
+			break;
+		}
+		case 3: //mono¿enie
+		{
+			return wynik = display1 * display2;
+			break;
+		}
+		case 4: //dzielenie
+		{
+			return wynik = display2 / display1;
+			break;
+		}
+		case 5: //pierwiastek
+		{
+			return wynik = sqrt(display2);
+			break;
+		}
+		case 6: //silnia
+		{
+			double wynik = 1;
+			for (int i = display2; i>0; i--) // TO DO: zabezpieczenie przed liczeniem z nieca³kowitych
+				wynik *= i;
+			return wynik; 
+			break;
+		}
+		case 7: //odwracanie liczby
+		{
+			return wynik = 1/display2;
+			break;
+		}
+		case 8: //sinus
+		{
+			return wynik = sin(display2*(PI/180));
+			break;
+		}
+		case 9: //cosinus
+		{
+			return wynik = cos(display2*(PI/180));
+			break;
+		}
+		case 10: //tangens
+		{
+			return wynik = tan(display2*(PI/180));
+			break;
+		}
+		case 11: //ln
+		{
+			if (display2 > 0)
+				return wynik = log(display2); //TO DO: zadbaæ by dzia³a³o tylko dla liczb dodatnich
+			else
+				return display2;
+			break;
+		}
+		case 12: //log10
+		{
+			if (display2 > 0)
+				return wynik = log10(display2); //TO DO: zadbaæ by dzia³a³o tylko dla liczb dodatnich
+			else
+				return display2;
+			break;
+		}
+		default:
+			return 1;
+	}	
 }
