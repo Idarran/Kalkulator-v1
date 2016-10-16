@@ -1,5 +1,4 @@
-//Program:		Kalkulator
-//Programista:	Hubert Hodowaniec
+/*KALKULATOR*/
 
 #include <windows.h>
 #include <cmath>
@@ -56,6 +55,8 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp);
 HWND ustawOkno(char* cClass, char* cTitle, int nSzer, int nWys, HINSTANCE hInstance);
 
 //zmienne globalne
+HINSTANCE hInstance;
+
 HWND hOkno,
 hB0, hB1, hB2, hB3, hB4, hB5, hB6, hB7, hB8, hB9,
 hBC, hBB,
@@ -68,11 +69,8 @@ hEB;
 double display1 = 0, display2 = 0;
 double wynik = 0;
 int functionflag = 0;	//flaga funkcji: 0=brak, 1=dodawanie, 2=odejmowanie, itd.
-int flag_New = 1;		//flaga nowy/kolejny
+double bufor = 0;		//bufor na wynik
 int poKropce = 0;
-//double dTotal = 0;		//wartoœæ bufora
-//char cBuf[MAXOUT];		//bufor
-
 
 HWND ustawOkno(char* cClass, char* cTitle, int nSzer, int nWys, HINSTANCE hInstance)
 {
@@ -86,8 +84,14 @@ HWND ustawOkno(char* cClass, char* cTitle, int nSzer, int nWys, HINSTANCE hInsta
 	wc.lpfnWndProc = wnd_proc;
 	wc.cbWndExtra = 0;
 	wc.hInstance = hInstance;
-	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-	wc.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+	wc.hIcon = (HICON)LoadImage(hInstance,
+		MAKEINTRESOURCE(4567), IMAGE_ICON,
+		::GetSystemMetrics(SM_CXICON),
+		::GetSystemMetrics(SM_CYICON), 0);
+	wc.hIconSm = (HICON)LoadImage(hInstance,
+		MAKEINTRESOURCE(4567), IMAGE_ICON,
+		::GetSystemMetrics(SM_CXSMICON),
+		::GetSystemMetrics(SM_CYSMICON), 0);
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(LTGRAY_BRUSH);
 	wc.lpszMenuName = NULL;
@@ -175,6 +179,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdline, int iCmdShow
 LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 {
 	static bool isFunctionActive = false;
+	static bool wasClicked = false;
 	static bool kropka = false;
 	int i = 0;
 
@@ -204,7 +209,9 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					isFunctionActive = false;
 					kropka = false;
 					poKropce = 0;
+					//wasClicked = false;
 					functionflag = 0;
+
 					break;
 				}
 				case BUTTON0:			// BUTTON0 clicked
@@ -453,6 +460,7 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					ustawWartosc(hEB, display1);
 					isFunctionActive = false;
 					kropka = false;
+					wasClicked = false;
 					poKropce = 0;
 					break;
 				}
@@ -489,42 +497,103 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				}*/
 				case BUTTOND:				// '+' 
 				{
-					functionflag = 1;			
-					isFunctionActive = true;
-					display2 = display2 + display1;
-					display1 = 0;
-					kropka = false;
-					poKropce = 0;
+					if (wasClicked)
+					{
+						wynik = oblicz(functionflag, display1, display2);
+						functionflag = 1;
+						isFunctionActive = true;
+						ustawWartosc(hEB, wynik);
+						display2 = wynik;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					else
+					{
+						functionflag = 1;
+						isFunctionActive = true;
+						display2 = display1;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					wasClicked = true;
+					
 					break;
 				}
 				case BUTTONO:				// '-' 
 				{
-					functionflag = 2;			
-					isFunctionActive = true;
-					display2 = display2 + display1;
-					display1 = 0;
-					kropka = false;
-					poKropce = 0;
+					if (wasClicked)
+					{
+						wynik = oblicz(functionflag, display1, display2);
+						functionflag = 2;
+						isFunctionActive = true;
+						ustawWartosc(hEB, wynik);
+						display2 = wynik;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					else
+					{
+						functionflag = 2;
+						isFunctionActive = true;
+						display2 = display1;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					wasClicked = true;
 					break;
 				}
 				case BUTTONX:				// '*' 
 				{
-					functionflag = 3;				
-					isFunctionActive = true;
-					display2 = display2 + display1;
-					display1 = 0;
-					kropka = false;
-					poKropce = 0;
+					if (wasClicked)
+					{
+						wynik = oblicz(functionflag, display1, display2);
+						functionflag = 3;
+						isFunctionActive = true;
+						ustawWartosc(hEB, wynik);
+						display2 = wynik;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					else
+					{
+						functionflag = 3;
+						isFunctionActive = true;
+						display2 = display1;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					wasClicked = true;
 					break;
 				}
 				case BUTTONDZ:				// '/' 
 				{
-					functionflag = 4;				
-					isFunctionActive = true;
-					display2 = display2 + display1;
-					display1 = 0;
-					kropka = false;
-					poKropce = 0;
+					if (wasClicked)
+					{
+						wynik = oblicz(functionflag, display1, display2);
+						functionflag = 4;
+						isFunctionActive = true;
+						ustawWartosc(hEB, wynik);
+						display2 = wynik;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					else
+					{
+						functionflag = 4;
+						isFunctionActive = true;
+						display2 = display1;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					wasClicked = true;
 					break;
 				}
 				case BUTTONP:				// 'sqrt' 

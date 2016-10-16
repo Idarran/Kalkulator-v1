@@ -148,10 +148,13 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="resource4.h" />
+    <ClInclude Include="resource5.h" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Kalkulator 1.0.rc" />
+    <Image Include="K:\Ikonki\NykIkona.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Kalkulator 1.01.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
