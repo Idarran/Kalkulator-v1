@@ -1,0 +1,7 @@
+﻿  Source.cpp
+Source.cpp(656): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+  Generating code
+  All 87 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  Kalkulator 1.0.vcxproj -> D:\Users\Nep\Documents\Git\PA\Kalkulator 1.0\Kalkulator 1.0\Release\Kalkulator 1.0.exe
+  Kalkulator 1.0.vcxproj -> D:\Users\Nep\Documents\Git\PA\Kalkulator 1.0\Kalkulator 1.0\Release\Kalkulator 1.0.pdb (Full PDB)
