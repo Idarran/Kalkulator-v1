@@ -1,5 +1,9 @@
 /*KALKULATOR*/
 
+//      TO DO       //
+// *backspace
+// *memory?
+
 #include <windows.h>
 #include <cmath>
 #include <string>
@@ -18,7 +22,7 @@
 #define BUTTON9 109
 
 #define BUTTONC 110 //czyszczenie pola edycyjnego
-#define BUTTONB 111 //cofanie poprzedniego znaku
+//#define BUTTONB 111 //cofanie poprzedniego znaku
 
 #define BUTTOND 112 //dodawanie
 #define BUTTONO 113 //odejmowanie
@@ -44,7 +48,7 @@
 
 #define MAXOUT 25
 #define MAXIN  10
-#define PI 3.14159265
+#define PI 3.141592
 
 
 //prototypy funkcji
@@ -69,7 +73,6 @@ hEB;
 double display1 = 0, display2 = 0;
 double wynik = 0;
 int functionflag = 0;	//flaga funkcji: 0=brak, 1=dodawanie, 2=odejmowanie, itd.
-double bufor = 0;		//bufor na wynik
 int poKropce = 0;
 
 HWND ustawOkno(char* cClass, char* cTitle, int nSzer, int nWys, HINSTANCE hInstance)
@@ -103,11 +106,6 @@ HWND ustawOkno(char* cClass, char* cTitle, int nSzer, int nWys, HINSTANCE hInsta
 		WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,
 		CW_USEDEFAULT, CW_USEDEFAULT, nSzer, nWys,
 		NULL, NULL, hInstance, NULL);
-
-	/*
-	if (NULL == hOkno)
-		return -1; //sprawdzenie, czy siê uda³o
-	*/
 
 	return hOkno;
 }
@@ -147,7 +145,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdline, int iCmdShow
 	hBP = CreateWindow("button", "sqrt", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 205, 92, 40, 30, hOkno, (HMENU)BUTTONP, hInstance, NULL);
 	hBS = CreateWindow("button", "x!", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 205, 124, 40, 30, hOkno, (HMENU)BUTTONS, hInstance, NULL);
 	hBLO = CreateWindow("button", "1/x", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 205, 156, 40, 30, hOkno, (HMENU)BUTTONLO, hInstance, NULL);
-	hBR = CreateWindow("button", "=", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 250, 55, 40, 30, hOkno, (HMENU)BUTTONR, hInstance, NULL);
+	//hBR = CreateWindow("button", "=", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 250, 55, 40, 30, hOkno, (HMENU)BUTTONR, hInstance, NULL);
+	hBR = CreateWindow("button", "=", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 160, 55, 130, 30, hOkno, (HMENU)BUTTONR, hInstance, NULL);
 
 	hBSIN = CreateWindow("button", "SIN", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 250, 92, 40, 30, hOkno, (HMENU)BUTTONSIN, hInstance, NULL);
 	hBCOS = CreateWindow("button", "COS", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 250, 124, 40, 30, hOkno, (HMENU)BUTTONCOS, hInstance, NULL);
@@ -155,8 +154,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdline, int iCmdShow
 	hBLN = CreateWindow("button", "LN", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 205, 188, 40, 30, hOkno, (HMENU)BUTTONLN, hInstance, NULL);
 	hBLG = CreateWindow("button", "LOG", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 250, 188, 40, 30, hOkno, (HMENU)BUTTONLG, hInstance, NULL);
 
-	hBB = CreateWindow("button", "<-", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 20, 55, 130, 30, hOkno, (HMENU)BUTTONB, hInstance, NULL);
-	hBC = CreateWindow("button", "C", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 160, 55, 85, 30, hOkno, (HMENU)BUTTONC, hInstance, NULL);
+	//hBB = CreateWindow("button", "<-", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 20, 55, 130, 30, hOkno, (HMENU)BUTTONB, hInstance, NULL);
+	hBC = CreateWindow("button", "C", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, 20, 55, 130, 30, hOkno, (HMENU)BUTTONC, hInstance, NULL);
 
 	hEB = CreateWindowEx(WS_EX_CLIENTEDGE, "edit", "", WS_CHILD | WS_VISIBLE | ES_RIGHT, 20, 20, 270, 25, hOkno, (HMENU)EDITBX, hInstance, NULL);
 
@@ -181,40 +180,40 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 	static bool isFunctionActive = false;
 	static bool wasClicked = false;
 	static bool kropka = false;
-	int i = 0;
 
 	switch (message)
 	{
 		case WM_COMMAND:
 		{
-			/*if (lp && LOWORD(wp) == EDITBX)
-			{
-				switch (HIWORD(wp))
-				{
-					case EN_SETFOCUS:
-					{
-						SetFocus(hOkno);
-						break;
-					}
-				}
-				break;
-			}*/
 			switch (LOWORD(wp))
 			{
 				case BUTTONR:				// '=' 
 				{
-					wynik = oblicz(functionflag, display1, display2);
-					ustawWartosc(hEB, wynik);
-					display1 = wynik;
-					isFunctionActive = false;
-					kropka = false;
-					poKropce = 0;
-					//wasClicked = false;
-					functionflag = 0;
-
+					if (wasClicked)
+					{
+						wynik = oblicz(functionflag, display1, display2);
+						functionflag = 0;
+						isFunctionActive = true;
+						ustawWartosc(hEB, wynik);
+						display2 = wynik;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					else
+					{
+						//wynik = oblicz(functionflag, display1, display2);
+						functionflag = 0;
+						isFunctionActive = true;
+						display2 = display1;
+						display1 = 0;
+						kropka = false;
+						poKropce = 0;
+					}
+					wasClicked = true;
 					break;
 				}
-				case BUTTON0:			// BUTTON0 clicked
+				case BUTTON0:			
 				{
 					if (isFunctionActive)
 						isFunctionActive = false;
@@ -232,14 +231,11 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON1:			// BUTTON1 clicked
+				case BUTTON1:			
 				{
 					
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
 						
 					if (!kropka)
 					{
@@ -254,13 +250,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON2:			// BUTTON2 clicked
+				case BUTTON2:			
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
 
 					if (!kropka)
 					{
@@ -276,13 +269,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON3:			// BUTTON3 clicked
+				case BUTTON3:			
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
 
 					if (!kropka)
 					{
@@ -297,13 +287,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON4:			// BUTTON4 clicked
+				case BUTTON4:			
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
 
 					if (!kropka)
 					{
@@ -318,13 +305,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON5:			// BUTTON5 clicked
+				case BUTTON5:			
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
 
 					if (!kropka)
 					{
@@ -339,14 +323,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON6:			// BUTTON6 clicked
+				case BUTTON6:			
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
-
 					if (!kropka)
 					{
 						display1 = (display1 * 10) + 6;
@@ -360,13 +340,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON7:			// BUTTON7 clicked
+				case BUTTON7:			
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
 
 					if (!kropka)
 					{
@@ -381,13 +358,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON8:			// BUTTON8 clicked
+				case BUTTON8:			
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
 
 					if (!kropka)
 					{
@@ -402,13 +376,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					}
 					break;
 				}
-				case BUTTON9:			// BUTTON9 clicked
+				case BUTTON9:			
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
 
 					if (!kropka)
 					{
@@ -426,10 +397,8 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				case BUTTONPI:
 				{
 					if (isFunctionActive)
-					{
-						//display1 = 0;
 						isFunctionActive = false;
-					}
+				
 
 					if (!kropka)
 					{
@@ -446,14 +415,10 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				}
 				case BUTTONK:			// kropka dziesiêtna
 				{
-					/*if (!kropka)
-						kropka = true;
-					else if (kropka)
-						kropka = false;*/
 					kropka = (!kropka);
 					break;
 				}
-				case BUTTONC:					// czyszczenie
+				case BUTTONC:			// czyszczenie
 				{
 					display1 = 0;
 					display2 = 0;
@@ -464,37 +429,6 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 					poKropce = 0;
 					break;
 				}
-				/*case BUTTONB:					// TODO  Backspace clicked
-				{
-					if (backsp)
-					{
-						if (strlen(cBuf)>1)
-						{
-							char cLast[1];
-							int iSLen = strlen(cBuf);
-							cLast[0] = cBuf[iSLen - 1];
-							if (strncmp(cLast, ".", 1) == 0)
-							{
-								dot = false;
-							}
-							strncpy(cTemp, cBuf, (iSLen - 1));
-							cTemp[(iSLen - 1)] = '\0';
-							strcpy(cBuf, cTemp);
-							SetWindowText(hEB, cBuf);
-						}
-						else
-						{
-							if (strlen(cBuf) == 1)
-							{
-								cBuf[0] = 0;		// Clear char buffer
-								SetWindowText(hEB, "0.");
-								nNew = 1;			// Set new digit
-								dot = false;
-							}
-						}
-					}
-					break;
-				}*/
 				case BUTTOND:				// '+' 
 				{
 					if (wasClicked)
@@ -599,48 +533,56 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 				case BUTTONP:				// 'sqrt' 
 				{
 					functionflag = 5;
+					wasClicked = true;
 					SendMessage(hBR, BM_CLICK, 0, 0);
 					break;
 				}
 				case BUTTONS:				// silnia
 				{
 					functionflag = 6;
+					wasClicked = true;
 					SendMessage(hBR, BM_CLICK, 0, 0);
 					break;
 				}
 				case BUTTONLO:				// '1/x' 
 				{
 					functionflag = 7;
+					wasClicked = true;
 					SendMessage(hBR, BM_CLICK, 0, 0);
 					break;
 				}
 				case BUTTONSIN:				// sinus 
 				{
 					functionflag = 8;
+					wasClicked = true;
 					SendMessage(hBR, BM_CLICK, 0, 0);
 					break;
 				}					
 				case BUTTONCOS:				// cosinus
 				{
 					functionflag = 9;
+					wasClicked = true;
 					SendMessage(hBR, BM_CLICK, 0, 0);
 					break;
 				}
 				case BUTTONTG:				// tangens
 				{
 					functionflag = 10;
+					wasClicked = true;
 					SendMessage(hBR, BM_CLICK, 0, 0);
 					break;
 				}
 				case BUTTONLN:				// ln
 				{
 					functionflag = 11;
+					wasClicked = true;
 					SendMessage(hBR, BM_CLICK, 0, 0);
 					break;
 				}
 				case BUTTONLG:				// log10				
 				{
 					functionflag = 12;
+					wasClicked = true;
 					SendMessage(hBR, BM_CLICK, 0, 0);
 					break;
 				}
@@ -663,20 +605,25 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT message, WPARAM wp, LPARAM lp)
 	return 0;
 }
 
+//funkcja wypisuj¹ca na pole tekstowe
 void ustawWartosc(HWND hEB,double display)
 {
 	std::string s = std::to_string(display);
 	SetWindowText(hEB, s.c_str());
 }
 
+//funkcja licz¹ca 
 double oblicz(int functionflag, double display1, double display2)
 {
+
 	switch (functionflag)
 	{
 		double wynik;
 
 		case 0: //równa siê
 		{
+			return display2;
+			break;
 		}
 		case 1: //dodawanie
 		{
@@ -734,7 +681,7 @@ double oblicz(int functionflag, double display1, double display2)
 		case 11: //ln
 		{
 			if (display1 > 0)
-				return wynik = log(display1); //TO DO: zadbaæ by dzia³a³o tylko dla liczb dodatnich
+				return wynik = log(display1);
 			else
 				return display1;
 			break;
@@ -742,7 +689,7 @@ double oblicz(int functionflag, double display1, double display2)
 		case 12: //log10
 		{
 			if (display1 > 0)
-				return wynik = log10(display1); //TO DO: zadbaæ by dzia³a³o tylko dla liczb dodatnich
+				return wynik = log10(display1);
 			else
 				return display1;
 			break;
@@ -752,6 +699,7 @@ double oblicz(int functionflag, double display1, double display2)
 	}	
 }
 
+//funkcja obliczaj¹ca wartoœæ pod przyciskiem
 double bvalue(int poKropce, double whichButton)
 {
 	double result = 0;
